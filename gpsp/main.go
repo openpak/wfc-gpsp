@@ -34,7 +34,7 @@ func HandlePacket(index uint64, data []byte) {
 	commands, err := common.ParseGameSpyMessage(message)
 	if err != nil {
 		logging.Error(moduleName, "Error parsing message:", err.Error())
-		logging.Error(moduleName, "Raw data:", message)
+		logging.Error(moduleName, "Raw data:", len(message), "bytes")
 		httplog.Command(ServerName, "parse", "error", time.Now())
 		replyError(moduleName, index, gpcm.ErrParse)
 		return
@@ -46,7 +46,7 @@ func HandlePacket(index uint64, data []byte) {
 		default:
 			result = "unknown"
 			logging.Error(moduleName, "Unknown command:", command.Command)
-			logging.Error(moduleName, "Raw data:", message)
+			logging.Error(moduleName, "Raw data:", len(message), "bytes")
 			replyError(moduleName, index, gpcm.ErrParse)
 
 		case "ka":
