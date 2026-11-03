@@ -3,7 +3,9 @@ package gpsp
 import (
 	"openpak/wfc-common/common"
 	gpcm "openpak/wfc-common/gpcmclient"
+	"openpak/wfc-common/httplog"
 	"openpak/wfc-common/logging"
+	"time"
 )
 
 var ServerName = "gpsp"
@@ -33,13 +35,16 @@ func HandlePacket(index uint64, data []byte) {
 	if err != nil {
 		logging.Error(moduleName, "Error parsing message:", err.Error())
 		logging.Error(moduleName, "Raw data:", message)
+		httplog.Command(ServerName, "parse", "error", time.Now())
 		replyError(moduleName, index, gpcm.ErrParse)
 		return
 	}
 
 	for _, command := range commands {
+		start, result := time.Now(), "ok"
 		switch command.Command {
 		default:
+			result = "unknown"
 			logging.Error(moduleName, "Unknown command:", command.Command)
 			logging.Error(moduleName, "Raw data:", message)
 			replyError(moduleName, index, gpcm.ErrParse)
@@ -53,6 +58,10 @@ func HandlePacket(index uint64, data []byte) {
 		case "search":
 			err = common.SendPacket(ServerName, index, []byte(handleSearch(command)))
 		}
+		if err != nil {
+			result = "error"
+		}
+		httplog.Command(ServerName, command.Command, result, start)
 	}
 	if err != nil {
 		logging.Error(moduleName, "Failed to send packet:", err)
